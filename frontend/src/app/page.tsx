@@ -4,8 +4,8 @@ import React, { useState, useRef } from 'react';
 import RadialMenu from '@/components/RadialMenu';
 import StudyMode from '@/components/StudyMode';
 import WorkMode from '@/components/WorkMode';
-import WaveBackground from '@/components/WaveBackground';
 import { BookOpen, Pin, RefreshCw, Mic, Square } from 'lucide-react';
+
 
 export default function Home() {
   const [currentMode, setCurrentMode] = useState<'clase' | 'estudio' | 'trabajo'>('clase');
@@ -47,7 +47,7 @@ export default function Home() {
     }
   };
 
-  // Detener grabación y enviar a Whisper + Llama 3
+  // Detener grabación y enviar a Whisper + LLM
   const stopRecordingAndSend = async () => {
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state === 'inactive') return;
@@ -55,16 +55,13 @@ export default function Home() {
     setLoading(true);
     setIsRecording(false);
 
-    // Esperar a que se procese el evento 'onstop' y se reciba el último fragmento de audio
     await new Promise<void>((resolve) => {
       recorder.onstop = () => resolve();
       recorder.stop();
     });
 
-    // Detener las pistas del micrófono para liberar el hardware
     recorder.stream.getTracks().forEach((track) => track.stop());
 
-    // Crear el Blob con todo el audio capturado
     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
     if (audioBlob.size === 0) {
@@ -97,41 +94,36 @@ export default function Home() {
   };
 
   return (
+
     <main className="min-h-screen text-slate-900 p-8 relative font-sans overflow-x-hidden">
-      <WaveBackground />
       <RadialMenu onSelectMode={(mode) => setCurrentMode(mode)} />
 
-      <header className="max-w-5xl mx-auto mb-10 flex items-center justify-between backdrop-blur-md bg-white/40 border border-white/50 p-6 rounded-2xl shadow-lg">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
-            <span className="w-10 h-10 rounded-full bg-[#FCE282] border border-amber-300 flex items-center justify-center text-xl shadow-sm">
-              🌊
-            </span>
-            Hand of Focus
-          </h1>
-          <p className="text-sm text-slate-700 font-medium mt-1">
-            Copilot de autorregulación y concentración sin interrupciones punitivas.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-900/10 border border-emerald-700/30 text-emerald-900 text-xs font-mono font-semibold">
-          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-          FastAPI Engine Online
-        </div>
+      {/* Header compacto (reducido ~25% a cada lado y centrado) */}
+      <header className="max-w-xl mx-auto backdrop-blur-md bg-white/60 border border-white/70 rounded-3xl p-6 text-center shadow-xl mb-8">
+        <h1
+          className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight mb-2"
+          style={{ fontFamily: 'Garamond, "EB Garamond", Georgia, serif' }}
+        >
+          Hand of Focus
+        </h1>
+        <p className="text-slate-700 text-sm md:text-base font-medium">
+          Copilot de autorregulación y concentración
+        </p>
       </header>
 
-      <section className="max-w-5xl mx-auto">
+      <section className="max-w-5xl mx-auto mt-29">
         {currentMode === 'clase' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-3 border-b border-white/30 pb-4">
-              <BookOpen className="w-6 h-6 text-slate-800" />
-              <h2 className="text-xl font-semibold text-slate-800">
+            <div className="flex items-center gap-3 border-b border-slate-900/10 pb-4">
+              <BookOpen className="w-6 h-6 text-black" />
+              <h2 className="text-slate-900 font-bold text-2xl tracking-tight">
                 Modo Clase — Escucha Activa & Reenganche
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2 backdrop-blur-md bg-white/60 border border-white/70 rounded-2xl p-6 shadow-xl space-y-4">
-                <h3 className="text-md font-medium text-slate-800">
+                <h3 className="text-md font-semibold text-slate-900">
                   Contexto de la Explicación en Vivo
                 </h3>
 
@@ -182,8 +174,8 @@ export default function Home() {
               </div>
 
               <div className="backdrop-blur-md bg-white/60 border border-white/70 rounded-2xl p-6 shadow-xl space-y-4">
-                <h3 className="text-md font-medium text-slate-800 flex items-center gap-2">
-                  <Pin className="w-4 h-4 text-amber-600" /> Anclas de Atención
+                <h3 className="text-md font-semibold text-slate-900 flex items-center gap-2">
+                  <Pin className="w-4 h-4 text-slate-900" /> Espacio de Notas
                 </h3>
                 <textarea
                   value={anchorInput}
@@ -195,7 +187,7 @@ export default function Home() {
                   onClick={handleSaveAnchor}
                   className="w-full py-2 bg-[#FCE282] hover:bg-amber-300 text-slate-900 font-semibold text-sm rounded-xl border border-amber-300 transition-all shadow-sm"
                 >
-                  Guardar Ancla
+                  Guardar Nota
                 </button>
 
                 {anchors.length > 0 && (
@@ -218,6 +210,7 @@ export default function Home() {
         {currentMode === 'estudio' && <StudyMode />}
         {currentMode === 'trabajo' && <WorkMode />}
       </section>
+
     </main>
   );
 }

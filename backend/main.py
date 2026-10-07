@@ -132,7 +132,8 @@ def procesar_reenganche_audio(
             messages=[
                 {"role": "system", "content": "Eres un tutor conciso y amigable."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            max_tokens=150
         )
 
         respuesta_llama = completion.choices[0].message.content
