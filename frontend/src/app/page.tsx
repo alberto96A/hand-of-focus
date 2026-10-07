@@ -20,6 +20,9 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Base URL de la API configurable desde .env.local / Vercel
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
   const handleSaveAnchor = () => {
     if (anchorInput.trim()) {
       setAnchors([...anchors, anchorInput.trim()]);
@@ -74,7 +77,7 @@ export default function Home() {
     formData.append('audio', audioBlob, 'grabacion_clase.webm');
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/reenganche-audio', {
+      const response = await fetch(`${API_URL}/api/reenganche-audio`, {
         method: 'POST',
         body: formData,
       });
@@ -94,9 +97,11 @@ export default function Home() {
   };
 
   return (
-
     <main className="min-h-screen text-slate-900 p-8 relative font-sans overflow-x-hidden">
-      <RadialMenu onSelectMode={(mode) => setCurrentMode(mode)} />
+      <RadialMenu
+        currentMode={currentMode}
+        onSelectMode={(mode) => setCurrentMode(mode as 'clase' | 'estudio' | 'trabajo')}
+      />
 
       {/* Header compacto (reducido ~25% a cada lado y centrado) */}
       <header className="max-w-xl mx-auto backdrop-blur-md bg-white/60 border border-white/70 rounded-3xl p-6 text-center shadow-xl mb-8">
