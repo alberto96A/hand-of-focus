@@ -9,12 +9,28 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
-from dotenv import load_dotenv
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+# Cargar .env si existe en local
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
+api_key = os.getenv("GROQ_API_KEY")
+
+if not api_key:
+    raise RuntimeError(
+        "No se encontró GROQ_API_KEY en las variables de entorno.")
+
+# Inicializar cliente de Groq
+groq_client = Groq(api_key=api_key)
+
+# Instancia UNICA de FastAPI
+app = FastAPI(
+    title="Hand of Focus API",
+    description="Backend para el copilot de autorregulación y foco TDAH",
+    version="1.0.0"
+)
+
+# Configuración UNICA de CORS que permite el acceso desde Vercel y local
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,64 +39,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Forzar la carga del archivo .env que está en la misma carpeta que main.py (backend/.env)
-env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=env_path)
 
-api_key = os.getenv("GROQ_API_KEY")
-
-if not api_key:
-    raise RuntimeError(
-        f"No se pudo cargar GROQ_API_KEY desde {env_path}. "
-        "Asegúrate de que el archivo se llama exactamente .env y contiene GROQ_API_KEY=gsk_..."
-    )
-
-# Inicializar cliente de Groq pasando la clave de forma explícita
-groq_client = Groq(api_key=api_key)
-
-app = FastAPI(
-    title="Hand of Focus API",
-    description="Backend para el copilot de autorregulación y foco TDAH",
-    version="1.0.0"
-)
-
-# Permitir conexiones desde el Frontend de Next.js (CORS)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# Inicializar la base de datos al arrancar
 @app.on_event("startup")
 def startup_event():
     db.init_db()
 
 
-# Schemas de validación para Pydantic
+# Schemas Pydantic
 class SesionRequest(BaseModel):
     modo: str
     duracion: int
     notas: Optional[str] = ""
 
 
-class ReengancheRequest(BaseModel):
-    transcripcion: str
-
-
 class ReengagementResponse(BaseModel):
     transcripcion: str
     respuesta: str
+    resumen: str  # Incluido para compatibilidad si el frontend busca data.resumen
 
-
-# Endpoints de la API
 
 @app.get("/")
 def read_root():
@@ -152,7 +128,9 @@ def procesar_reenganche_audio(
 
         return ReengagementResponse(
             transcripcion=texto_transcrito,
-            respuesta=respuesta_llama
+            respuesta=respuesta_llama,
+            # Retorna ambas claves por si tu frontend usa data.resumen o data.respuesta
+            resumen=respuesta_llama
         )
 
     except Exception as e:
