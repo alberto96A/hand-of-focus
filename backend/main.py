@@ -1,3 +1,5 @@
+import ai_service
+import db
 import os
 import tempfile
 from pathlib import Path
@@ -8,9 +10,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-import db
-import ai_service
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Forzar la carga del archivo .env que está en la misma carpeta que main.py (backend/.env)
 env_path = Path(__file__).resolve().parent / ".env"
